@@ -1,26 +1,204 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { Layout, TabNode } from "flexlayout-react";
+import "flexlayout-react/style/light.css";
+import { useCallback, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
+import { useRecoilCallback, useRecoilState, useRecoilValue } from "recoil";
+import { styleEditorLayoutModel, topLayoutModel } from "./Layout.js";
+import BlueButton from "./components/BlueButton.js";
+import { NonStyleEditor, StyleEditor } from "./components/ProgramEditor.js";
+import { StyleResourceEditor } from "./components/StyleResourceEditor.js";
+import VizPanel from "./components/VizPanel.js";
+import {
+  currentDirtyStyleProgramState,
+  currentDomainProgramState,
+  currentStyleProgramState,
+  currentSubstanceProgramState,
+} from "./state/atoms.js";
+import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+type DomainAndSubstanceMessage = {
+  kind: "DomainAndSubstance";
+  domain: string;
+  substance: string;
+};
+
+const App = ({ port }: { port: number }) => {
+  if (port === null) {
+    port = 1550;
+  }
+
+  const ws = useRef<WebSocket | null>(null);
+
+  const compileDiagram = useCompileDiagram();
+  const updateDomainAndSubstance = useRecoilCallback(
+    ({ set }) =>
+      async (domain: string, substance: string) => {
+        await set(currentDomainProgramState, domain);
+        await set(currentSubstanceProgramState, substance);
+        await compileDiagram();
+      }
   );
-}
+
+  const connectPenroseProgramServer = useCallback(() => {
+    ws.current = new WebSocket("ws://localhost:" + port);
+    ws.current.onclose = () => {
+      toast.error("disconnected from Penlloy's Penrose program server", {
+        duration: 1000,
+      });
+    };
+    ws.current.onerror = () => {
+      toast.error("couldn't connect to Penlloy's Penrose program server", {
+        duration: 1000,
+      });
+    };
+    ws.current.onopen = () => {
+      toast.success("connected to Penlloy's Penrose program server", {
+        duration: 1000,
+      });
+    };
+    ws.current.onmessage = (e) => {
+      const parsed = JSON.parse(e.data) as DomainAndSubstanceMessage;
+      console.log(parsed);
+      const { domain, substance } = parsed;
+      updateDomainAndSubstance(domain, substance);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (ws.current === null) {
+      connectPenroseProgramServer();
+    }
+  }, []);
+
+  const dirtyStyle = useRecoilValue(currentDirtyStyleProgramState);
+  const [, setStyle] = useRecoilState(currentStyleProgramState);
+
+  const resampleDiagram = useResampleDiagram();
+  const componentFactory = (node: TabNode) => {
+    const component = node.getId();
+    switch (component) {
+      case "styleProgramEditor":
+        return (
+          <div
+            style={{ display: "flex", flexDirection: "row", height: "100%" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "100%",
+                width: "100%",
+              }}
+            >
+              <BlueButton
+                onClick={() => {
+                  setStyle(dirtyStyle);
+                  compileDiagram();
+                }}
+              >
+                Apply style
+              </BlueButton>
+              <StyleEditor />
+            </div>
+          </div>
+        );
+      case "styleResourcesEditor":
+        return (
+          <div
+            style={{ display: "flex", flexDirection: "row", height: "100%" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "100%",
+                width: "100%",
+              }}
+            >
+              <StyleResourceEditor />
+            </div>
+          </div>
+        );
+      case "domainProgramEditor":
+        return (
+          <div
+            style={{ display: "flex", flexDirection: "row", height: "100%" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "100%",
+                width: "100%",
+              }}
+            >
+              <span>
+                <i>
+                  This program is automatially generated from the Alloy model
+                  and read-only.
+                </i>
+              </span>
+              <NonStyleEditor languageType="domain" />
+            </div>
+          </div>
+        );
+      case "substanceProgramEditor":
+        return (
+          <div
+            style={{ display: "flex", flexDirection: "row", height: "100%" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "100%",
+                width: "100%",
+              }}
+            >
+              <span>
+                <i>
+                  This program is automatially generated from the Alloy instance
+                  and read-only.
+                </i>
+              </span>
+              <NonStyleEditor languageType="substance" />
+            </div>
+          </div>
+        );
+      case "vizPanel":
+        return (
+          <div
+            style={{ display: "flex", flexDirection: "row", height: "100%" }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: "100%",
+                width: "100%",
+              }}
+            >
+              <BlueButton
+                onClick={() => {
+                  resampleDiagram();
+                }}
+              >
+                Resample
+              </BlueButton>
+
+              <VizPanel />
+            </div>
+          </div>
+        );
+      case "styleEditor":
+        return (
+          <Layout model={styleEditorLayoutModel} factory={componentFactory} />
+        );
+    }
+    return <div> PlaceHolder </div>;
+  };
+
+  return <Layout model={topLayoutModel} factory={componentFactory} />;
+};
 
 export default App;
