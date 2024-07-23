@@ -9,7 +9,7 @@ import {
 } from "@penrose/core";
 import * as im from "immutable";
 import { RefObject } from "react";
-import { generateVariation } from "./variation";
+import { generateVariation } from "./variation.js";
 
 export type ProgramType = "substance" | "domain" | "style";
 export type ProgramContent = SubstanceProgram | DomainProgram | StyleProgram;
