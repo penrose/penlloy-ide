@@ -10,6 +10,7 @@ import {
 import * as im from "immutable";
 import { RefObject } from "react";
 import { generateVariation } from "./variation.js";
+import { DomainCache, getDomainCache } from "@penrose/components";
 
 export type ProgramType = "substance" | "domain" | "style";
 export type ProgramContent = SubstanceProgram | DomainProgram | StyleProgram;
@@ -61,16 +62,21 @@ export const currentDirtyStyleProgramState = atom<StyleProgram>({
   default: "",
 });
 
-export const currentDomainCacheSelector = selector<DomainEnv | null>({
-  key: "currentDomainCacheSelector",
+export const currentDomainCacheState = selector<DomainCache>({
+  key: "currentDomainCacheState",
   get: ({ get }) => {
     const domainProgram = get(currentDomainProgramState);
-    const env = compileDomain(domainProgram);
-    if (env.isOk()) {
-      return env.value;
-    } else {
-      return null;
-    }
+    const domainCache = getDomainCache(domainProgram);
+    return domainCache;
+  },
+});
+
+export const currentSubstanceCacheState = selector<DomainCache>({
+  key: "currentSubstanceCacheState",
+  get: ({ get }) => {
+    const substanceProgram = get(currentSubstanceProgramState);
+    const domainCache = getDomainCache(substanceProgram);
+    return domainCache;
   },
 });
 

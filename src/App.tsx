@@ -98,7 +98,16 @@ const App = ({ port }: { port: number }) => {
               >
                 Apply style
               </BlueButton>
-              <StyleEditor />
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  width: "100%",
+                }}
+              >
+                <StyleEditor />
+              </div>
             </div>
           </div>
         );
