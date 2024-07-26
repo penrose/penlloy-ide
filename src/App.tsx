@@ -12,9 +12,9 @@ import {
   currentServerStatusState,
   currentSubstanceProgramState,
 } from "./state/atoms.js";
-import { useCompileDiagram } from "./state/callbacks.js";
-import TopBar from "./components/TopBar.js";
+import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
 import ModelToolbar from "./components/ModelToolbar.js";
+import TopBar from "./components/TopBar.js";
 
 type DomainAndSubstanceMessage = {
   kind: "DomainAndSubstance";
@@ -185,7 +185,15 @@ const App = ({ port }: { port: number }) => {
     return <div> PlaceHolder </div>;
   };
 
-  return <Layout model={topLayoutModel} factory={componentFactory} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <TopBar />
+      <div style={{ position: "relative", flex: 1 }}>
+        <Layout model={topLayoutModel} factory={componentFactory} />
+      </div>
+      <ModelToolbar />
+    </div>
+  );
 };
 
 export default App;
