@@ -13,6 +13,15 @@ const FooterButtonContainer = styled.div`
 export default function ModelToolbar() {
 
 
+  {/*  
+  const newInit;
+  const newTrace;
+  const newFork;
+  const stepLeft;
+  const stepRight;
+  */}
+  
+
   return (
 
     <nav style={{
