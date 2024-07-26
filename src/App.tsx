@@ -2,13 +2,14 @@ import { Layout, TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useRecoilCallback } from "recoil";
+import { useRecoilCallback, useRecoilState } from "recoil";
 import { styleEditorLayoutModel, topLayoutModel } from "./Layout.js";
 import { NonStyleEditor, StyleEditor } from "./components/ProgramEditor.js";
 import { StyleResourceEditor } from "./components/StyleResourceEditor.js";
 import VizPanel from "./components/VizPanel.js";
 import {
   currentDomainProgramState,
+  currentServerStatusState,
   currentSubstanceProgramState,
 } from "./state/atoms.js";
 import { useCompileDiagram } from "./state/callbacks.js";
@@ -37,22 +38,20 @@ const App = ({ port }: { port: number }) => {
       }
   );
 
+  const [serverStatus, setServerStatus] = useRecoilState(
+    currentServerStatusState
+  );
+
   const connectPenroseProgramServer = useCallback(() => {
     ws.current = new WebSocket("ws://localhost:" + port);
     ws.current.onclose = () => {
-      toast.error("disconnected from Penlloy's Penrose program server", {
-        duration: 2000,
-      });
+      setServerStatus("disconnected");
     };
     ws.current.onerror = () => {
-      toast.error("couldn't connect to Penlloy's Penrose program server", {
-        duration: 2000,
-      });
+      setServerStatus("disconnected");
     };
     ws.current.onopen = () => {
-      toast.success("connected to Penlloy's Penrose program server", {
-        duration: 2000,
-      });
+      setServerStatus("connected");
     };
     ws.current.onmessage = (e) => {
       const parsed = JSON.parse(e.data) as DomainAndSubstanceMessage;

@@ -3,6 +3,7 @@ import { useCompileDiagram, useResampleDiagram } from "../state/callbacks.js";
 import BlueButton from "./BlueButton.js";
 import {
   currentDirtyStyleProgramState,
+  currentServerStatusState,
   currentStyleProgramState,
 } from "../state/atoms.js";
 import { useRecoilState, useRecoilValue } from "recoil";
@@ -19,6 +20,12 @@ export default function TopBar() {
 
   const dirtyStyleProgram = useRecoilValue(currentDirtyStyleProgramState);
   const [, setStyle] = useRecoilState(currentStyleProgramState);
+
+  const serverStatus = useRecoilValue(currentServerStatusState);
+
+  const serverStatusMarker =
+    serverStatus === "connected" ? "🟢 connected and ready" : "🔴 disconnected";
+
   return (
     <nav
       style={{
@@ -39,6 +46,8 @@ export default function TopBar() {
       >
         apply style ▶
       </BlueButton>
+
+      <span>{serverStatusMarker}</span>
       <BlueButton onClick={resampleDiagram}>resample ↻ </BlueButton>
     </nav>
   );

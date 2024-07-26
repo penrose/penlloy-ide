@@ -12,6 +12,8 @@ import { RefObject } from "react";
 import { generateVariation } from "./variation.js";
 import { DomainCache, getDomainCache } from "@penrose/components";
 
+//#region program contents
+
 export type ProgramType = "substance" | "domain" | "style";
 export type ProgramContent = SubstanceProgram | DomainProgram | StyleProgram;
 
@@ -80,6 +82,9 @@ export const currentSubstanceCacheState = selector<DomainCache>({
   },
 });
 
+//#endregion
+
+//#region style resources
 export type StyleSVGResource = {
   contents: string;
 };
@@ -90,7 +95,9 @@ export const currentStyleResourcesState = atom<StyleResources>({
   key: "currentStyleResourcesState",
   default: im.List(),
 });
+//#endregion
 
+//#region diagram
 export type DiagramMetadata = {
   variation: string;
   stepSize: number;
@@ -139,4 +146,12 @@ export type Canvas = {
 export const currentCanvasState = atom<Canvas>({
   key: "currentCanvasState",
   default: { ref: null },
+});
+//#endregion
+
+//#region server status
+
+export const currentServerStatusState = atom<"connected" | "disconnected">({
+  key: "currentServerStatusState",
+  default: "disconnected",
 });
