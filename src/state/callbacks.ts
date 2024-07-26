@@ -1,15 +1,15 @@
 import { compile, compileDomain, resample } from "@penrose/core";
 import toast from "react-hot-toast";
 import { CallbackInterface, useRecoilCallback } from "recoil";
-import { loadFromSnapshot } from "../utils/Utils";
+import { loadFromSnapshot } from "../utils/Utils.js";
 import {
   Diagram,
   currentDiagramState,
   currentDomainProgramState,
   currentStyleProgramState,
   currentSubstanceProgramState,
-} from "./atoms";
-import { generateVariation } from "./variation";
+} from "./atoms.js";
+import { generateVariation } from "./variation.js";
 
 const _compileDiagram = async (
   substance: string,
@@ -17,7 +17,7 @@ const _compileDiagram = async (
   domain: string,
   variation: string,
   excludeWarnings: string[],
-  set: CallbackInterface["set"],
+  set: CallbackInterface["set"]
 ) => {
   const compiledDomain = compileDomain(domain);
   if (compiledDomain.isErr()) {
@@ -59,7 +59,7 @@ const _compileDiagram = async (
         },
       },
       state: initialState,
-    }),
+    })
   );
 };
 
@@ -68,7 +68,7 @@ export const useCompileDiagram = () =>
     const domainProgram = loadFromSnapshot(snapshot, currentDomainProgramState);
     const substanceProgram = loadFromSnapshot(
       snapshot,
-      currentSubstanceProgramState,
+      currentSubstanceProgramState
     );
     const styleProgram = loadFromSnapshot(snapshot, currentStyleProgramState);
     const diagram = loadFromSnapshot(snapshot, currentDiagramState);
@@ -80,7 +80,7 @@ export const useCompileDiagram = () =>
       domainProgram,
       variation,
       [],
-      set,
+      set
     );
   });
 
