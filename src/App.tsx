@@ -2,19 +2,18 @@ import { Layout, TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
-import { useRecoilCallback, useRecoilState, useRecoilValue } from "recoil";
+import { useRecoilCallback, useRecoilState } from "recoil";
 import { styleEditorLayoutModel, topLayoutModel } from "./Layout.js";
-import BlueButton from "./components/BlueButton.js";
 import { NonStyleEditor, StyleEditor } from "./components/ProgramEditor.js";
 import { StyleResourceEditor } from "./components/StyleResourceEditor.js";
 import VizPanel from "./components/VizPanel.js";
 import {
-  currentDirtyStyleProgramState,
   currentDomainProgramState,
-  currentStyleProgramState,
+  currentServerStatusState,
   currentSubstanceProgramState,
 } from "./state/atoms.js";
-import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
+import { useCompileDiagram } from "./state/callbacks.js";
+import TopBar from "./components/TopBar.js";
 
 type DomainAndSubstanceMessage = {
   kind: "DomainAndSubstance";
@@ -39,22 +38,20 @@ const App = ({ port }: { port: number }) => {
       }
   );
 
+  const [serverStatus, setServerStatus] = useRecoilState(
+    currentServerStatusState
+  );
+
   const connectPenroseProgramServer = useCallback(() => {
     ws.current = new WebSocket("ws://localhost:" + port);
     ws.current.onclose = () => {
-      toast.error("disconnected from Penlloy's Penrose program server", {
-        duration: 1000,
-      });
+      setServerStatus("disconnected");
     };
     ws.current.onerror = () => {
-      toast.error("couldn't connect to Penlloy's Penrose program server", {
-        duration: 1000,
-      });
+      setServerStatus("disconnected");
     };
     ws.current.onopen = () => {
-      toast.success("connected to Penlloy's Penrose program server", {
-        duration: 1000,
-      });
+      setServerStatus("connected");
     };
     ws.current.onmessage = (e) => {
       const parsed = JSON.parse(e.data) as DomainAndSubstanceMessage;
@@ -70,10 +67,6 @@ const App = ({ port }: { port: number }) => {
     }
   }, []);
 
-  const dirtyStyle = useRecoilValue(currentDirtyStyleProgramState);
-  const [, setStyle] = useRecoilState(currentStyleProgramState);
-
-  const resampleDiagram = useResampleDiagram();
   const componentFactory = (node: TabNode) => {
     const component = node.getId();
     switch (component) {
@@ -90,15 +83,16 @@ const App = ({ port }: { port: number }) => {
                 width: "100%",
               }}
             >
-              <BlueButton
-                onClick={() => {
-                  setStyle(dirtyStyle);
-                  compileDiagram();
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  width: "100%",
                 }}
               >
-                Apply style
-              </BlueButton>
-              <StyleEditor />
+                <StyleEditor />
+              </div>
             </div>
           </div>
         );
@@ -178,14 +172,6 @@ const App = ({ port }: { port: number }) => {
                 width: "100%",
               }}
             >
-              <BlueButton
-                onClick={() => {
-                  resampleDiagram();
-                }}
-              >
-                Resample
-              </BlueButton>
-
               <VizPanel />
             </div>
           </div>
@@ -198,7 +184,14 @@ const App = ({ port }: { port: number }) => {
     return <div> PlaceHolder </div>;
   };
 
-  return <Layout model={topLayoutModel} factory={componentFactory} />;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <TopBar />
+      <div style={{ position: "relative", flex: 1 }}>
+        <Layout model={topLayoutModel} factory={componentFactory} />
+      </div>
+    </div>
+  );
 };
 
 export default App;
