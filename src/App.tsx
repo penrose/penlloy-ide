@@ -22,12 +22,39 @@ type DomainAndSubstanceMessage = {
   substance: string;
 };
 
+
+type ExploreModel = {
+  kind: "ExploreModel";
+  operation: string;
+}
+
+export let ws: React.MutableRefObject<WebSocket | null>;
+
+export const broadcast = ({
+  operation
+}: {
+  operation: string;
+  
+}) => {
+  if (ws.current !== null) {
+    console.log("server: broadcasting operation");
+    if (ws.current.readyState === WebSocket.OPEN) {
+      const message = JSON.stringify({
+        kind: "ExploreModel",
+        operation: operation,
+      })
+      ws.current.send(message);
+      console.log('sent', message); //test
+    }
+  };
+};
+
+
+
 const App = ({ port }: { port: number }) => {
   if (port === null) {
     port = 1550;
   }
-
-  const ws = useRef<WebSocket | null>(null);
 
   const compileDiagram = useCompileDiagram();
   const updateDomainAndSubstance = useRecoilCallback(
@@ -43,6 +70,7 @@ const App = ({ port }: { port: number }) => {
     currentServerStatusState
   );
 
+  ws = useRef<WebSocket | null>(null);
   const connectPenroseProgramServer = useCallback(() => {
     ws.current = new WebSocket("ws://localhost:" + port);
     ws.current.onclose = () => {
