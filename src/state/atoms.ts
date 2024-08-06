@@ -155,3 +155,10 @@ export const currentServerStatusState = atom<"connected" | "disconnected">({
   key: "currentServerStatusState",
   default: "disconnected",
 });
+
+export const currentModelType = atom<"temporal" | "non-temporal">({
+  key: "currentModelType",
+  default: "non-temporal",
+});
+
+

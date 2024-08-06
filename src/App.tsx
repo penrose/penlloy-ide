@@ -11,10 +11,12 @@ import {
   currentDomainProgramState,
   currentServerStatusState,
   currentSubstanceProgramState,
+  currentModelType
 } from "./state/atoms.js";
 import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
 import ModelToolbar from "./components/ModelToolbar.js";
 import TopBar from "./components/TopBar.js";
+import handleModelType from "./components/ModelToolbar.js"
 
 type DomainAndSubstanceMessage = {
   kind: "DomainAndSubstance";
@@ -22,6 +24,10 @@ type DomainAndSubstanceMessage = {
   substance: string;
 };
 
+type ConfigMessage = {
+  kind: "Config";
+  isTrace: boolean;
+}
 
 type ExploreModel = {
   kind: "ExploreModel";
@@ -70,6 +76,8 @@ const App = ({ port }: { port: number }) => {
     currentServerStatusState
   );
 
+  const [modelType, setModelType] = useRecoilState(currentModelType);
+
   ws = useRef<WebSocket | null>(null);
   const connectPenroseProgramServer = useCallback(() => {
     ws.current = new WebSocket("ws://localhost:" + port);
@@ -87,6 +95,10 @@ const App = ({ port }: { port: number }) => {
       console.log(parsed);
       const { domain, substance } = parsed;
       updateDomainAndSubstance(domain, substance);
+      const parsed2 = JSON.parse(e.data) as ConfigMessage;
+      console.log(parsed2);
+      const newModelType = parsed2.isTrace ? 'temporal' : 'non-temporal';
+      setModelType(newModelType);
     };
   }, []);
 
