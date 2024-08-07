@@ -26,8 +26,12 @@ type DomainAndSubstanceMessage = {
 
 type ConfigMessage = {
   kind: "Config";
-  isTrace: boolean;
+  isTrace: string;
 }
+
+//add new type, either DomainAndSubstanceMessage or ConfigMessage
+type ServerMessage = DomainAndSubstanceMessage | ConfigMessage;
+
 
 type ExploreModel = {
   kind: "ExploreModel";
@@ -90,15 +94,20 @@ const App = ({ port }: { port: number }) => {
     ws.current.onopen = () => {
       setServerStatus("connected");
     };
+
+    //change here
     ws.current.onmessage = (e) => {
-      const parsed = JSON.parse(e.data) as DomainAndSubstanceMessage;
-      console.log(parsed);
-      const { domain, substance } = parsed;
-      updateDomainAndSubstance(domain, substance);
-      const parsed2 = JSON.parse(e.data) as ConfigMessage;
-      console.log(parsed2);
-      const newModelType = parsed2.isTrace ? 'temporal' : 'non-temporal';
-      setModelType(newModelType);
+      const parsed = JSON.parse(e.data) as ServerMessage;
+      if(parsed.kind === 'DomainAndSubstance') {
+        console.log(parsed);
+        const { domain, substance } = parsed;
+        updateDomainAndSubstance(domain, substance);
+      } else {
+        console.log(parsed);
+        const newModelType = (parsed.isTrace === 'temporal') ? 'temporal' : 'non-temporal';
+        setModelType(newModelType);
+        console.log("changed model type to: ", newModelType); //test
+      }
     };
   }, []);
 

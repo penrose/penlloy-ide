@@ -43,7 +43,7 @@ export default function ModelToolbar() {
       </FooterButtonContainer>
       ) : (
         <FooterButtonContainer>
-          <BlueButton title="Changes the initial values of variables" onClick={() => broadcast({operation: 'New'})}>New</BlueButton>
+          <BlueButton title="Changes the initial values of variables" onClick={() => broadcast({operation: 'Next'})}>New</BlueButton>
         </FooterButtonContainer>
       )}
       
