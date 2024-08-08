@@ -11,55 +11,34 @@ import {
   currentDomainProgramState,
   currentServerStatusState,
   currentSubstanceProgramState,
-  currentModelType
+  currentModelConfig,
 } from "./state/atoms.js";
 import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
 import ModelToolbar from "./components/ModelToolbar.js";
 import TopBar from "./components/TopBar.js";
-import handleModelType from "./components/ModelToolbar.js"
-
-type DomainAndSubstanceMessage = {
-  kind: "DomainAndSubstance";
-  domain: string;
-  substance: string;
-};
-
-type ConfigMessage = {
-  kind: "Config";
-  isTrace: string;
-}
-
-//add new type, either DomainAndSubstanceMessage or ConfigMessage
-type ServerMessage = DomainAndSubstanceMessage | ConfigMessage;
-
-
-type ExploreModel = {
-  kind: "ExploreModel";
-  operation: string;
-}
+import handleModelType from "./components/ModelToolbar.js";
+import { ServerMessage } from "./types/MessageFromServer.js";
+import {
+  ExploreModelMessage,
+  ExploreModelOp,
+} from "./types/MessageToServer.js";
 
 export let ws: React.MutableRefObject<WebSocket | null>;
 
-export const broadcast = ({
-  operation
-}: {
-  operation: string;
-  
-}) => {
+export const sendExploreModelOperation = (op: ExploreModelOp) => {
   if (ws.current !== null) {
     console.log("server: broadcasting operation");
     if (ws.current.readyState === WebSocket.OPEN) {
-      const message = JSON.stringify({
+      const msg: ExploreModelMessage = {
         kind: "ExploreModel",
-        operation: operation,
-      })
-      ws.current.send(message);
-      console.log('sent', message); //test
+        operation: op,
+      };
+      const msgStr = JSON.stringify(msg);
+      ws.current.send(msgStr);
+      console.log("sent", msgStr); //test
     }
-  };
+  }
 };
-
-
 
 const App = ({ port }: { port: number }) => {
   if (port === null) {
@@ -76,11 +55,9 @@ const App = ({ port }: { port: number }) => {
       }
   );
 
-  const [serverStatus, setServerStatus] = useRecoilState(
-    currentServerStatusState
-  );
+  const [, setServerStatus] = useRecoilState(currentServerStatusState);
 
-  const [modelType, setModelType] = useRecoilState(currentModelType);
+  const [, setModelConfig] = useRecoilState(currentModelConfig);
 
   ws = useRef<WebSocket | null>(null);
   const connectPenroseProgramServer = useCallback(() => {
@@ -98,15 +75,17 @@ const App = ({ port }: { port: number }) => {
     //change here
     ws.current.onmessage = (e) => {
       const parsed = JSON.parse(e.data) as ServerMessage;
-      if(parsed.kind === 'DomainAndSubstance') {
+      if (parsed.kind === "DomainAndSubstance") {
         console.log(parsed);
         const { domain, substance } = parsed;
         updateDomainAndSubstance(domain, substance);
       } else {
+        // ConfigMessage
         console.log(parsed);
-        const newModelType = (parsed.isTrace === 'temporal') ? 'temporal' : 'non-temporal';
-        setModelType(newModelType);
-        console.log("changed model type to: ", newModelType); //test
+        const { isTrace } = parsed;
+        const newModelConfig = { isTrace };
+        setModelConfig(newModelConfig);
+        console.log("changed model config to: ", newModelConfig); //test
       }
     };
   }, []);
