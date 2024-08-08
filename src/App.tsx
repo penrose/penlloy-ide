@@ -27,7 +27,7 @@ export let ws: React.MutableRefObject<WebSocket | null>;
 
 export const sendExploreModelOperation = (op: ExploreModelOp) => {
   if (ws.current !== null) {
-    console.log("server: broadcasting operation");
+    console.log("sending model exploration operation: ", op);
     if (ws.current.readyState === WebSocket.OPEN) {
       const msg: ExploreModelMessage = {
         kind: "ExploreModel",
@@ -35,7 +35,7 @@ export const sendExploreModelOperation = (op: ExploreModelOp) => {
       };
       const msgStr = JSON.stringify(msg);
       ws.current.send(msgStr);
-      console.log("sent", msgStr); //test
+      console.log("sent model exploration operation: ", op);
     }
   }
 };
@@ -76,16 +76,16 @@ const App = ({ port }: { port: number }) => {
     ws.current.onmessage = (e) => {
       const parsed = JSON.parse(e.data) as ServerMessage;
       if (parsed.kind === "DomainAndSubstance") {
-        console.log(parsed);
         const { domain, substance } = parsed;
         updateDomainAndSubstance(domain, substance);
       } else {
-        // ConfigMessage
-        console.log(parsed);
         const { isTrace } = parsed;
         const newModelConfig = { isTrace };
+        console.log(
+          "received new model config: ",
+          JSON.stringify(newModelConfig)
+        );
         setModelConfig(newModelConfig);
-        console.log("changed model config to: ", newModelConfig); //test
       }
     };
   }, []);
