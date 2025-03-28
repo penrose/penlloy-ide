@@ -11,6 +11,7 @@ import * as im from "immutable";
 import { RefObject } from "react";
 import { generateVariation } from "./variation.js";
 import { DomainCache, getDomainCache } from "@penrose/components";
+import { ModelConfig } from "../types/states.js";
 
 //#region program contents
 
@@ -154,4 +155,11 @@ export const currentCanvasState = atom<Canvas>({
 export const currentServerStatusState = atom<"connected" | "disconnected">({
   key: "currentServerStatusState",
   default: "disconnected",
+});
+
+export const currentModelConfig = atom<ModelConfig>({
+  key: "currentModelConfig",
+  default: {
+    isTrace: false,
+  },
 });

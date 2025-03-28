@@ -11,22 +11,39 @@ import {
   currentDomainProgramState,
   currentServerStatusState,
   currentSubstanceProgramState,
+  currentModelConfig,
 } from "./state/atoms.js";
-import { useCompileDiagram } from "./state/callbacks.js";
+import { useCompileDiagram, useResampleDiagram } from "./state/callbacks.js";
+import ModelToolbar from "./components/ModelToolbar.js";
 import TopBar from "./components/TopBar.js";
+import handleModelType from "./components/ModelToolbar.js";
+import { ServerMessage } from "./types/MessageFromServer.js";
+import {
+  ExploreModelMessage,
+  ExploreModelOp,
+} from "./types/MessageToServer.js";
 
-type DomainAndSubstanceMessage = {
-  kind: "DomainAndSubstance";
-  domain: string;
-  substance: string;
+export let ws: React.MutableRefObject<WebSocket | null>;
+
+export const sendExploreModelOperation = (op: ExploreModelOp) => {
+  if (ws.current !== null) {
+    console.log("sending model exploration operation: ", op);
+    if (ws.current.readyState === WebSocket.OPEN) {
+      const msg: ExploreModelMessage = {
+        kind: "ExploreModel",
+        operation: op,
+      };
+      const msgStr = JSON.stringify(msg);
+      ws.current.send(msgStr);
+      console.log("sent model exploration operation: ", op);
+    }
+  }
 };
 
 const App = ({ port }: { port: number }) => {
   if (port === null) {
     port = 1550;
   }
-
-  const ws = useRef<WebSocket | null>(null);
 
   const compileDiagram = useCompileDiagram();
   const updateDomainAndSubstance = useRecoilCallback(
@@ -38,10 +55,11 @@ const App = ({ port }: { port: number }) => {
       }
   );
 
-  const [serverStatus, setServerStatus] = useRecoilState(
-    currentServerStatusState
-  );
+  const [, setServerStatus] = useRecoilState(currentServerStatusState);
 
+  const [, setModelConfig] = useRecoilState(currentModelConfig);
+
+  ws = useRef<WebSocket | null>(null);
   const connectPenroseProgramServer = useCallback(() => {
     ws.current = new WebSocket("ws://localhost:" + port);
     ws.current.onclose = () => {
@@ -53,11 +71,22 @@ const App = ({ port }: { port: number }) => {
     ws.current.onopen = () => {
       setServerStatus("connected");
     };
+
+    //change here
     ws.current.onmessage = (e) => {
-      const parsed = JSON.parse(e.data) as DomainAndSubstanceMessage;
-      console.log(parsed);
-      const { domain, substance } = parsed;
-      updateDomainAndSubstance(domain, substance);
+      const parsed = JSON.parse(e.data) as ServerMessage;
+      if (parsed.kind === "DomainAndSubstance") {
+        const { domain, substance } = parsed;
+        updateDomainAndSubstance(domain, substance);
+      } else {
+        const { isTrace } = parsed;
+        const newModelConfig = { isTrace };
+        console.log(
+          "received new model config: ",
+          JSON.stringify(newModelConfig)
+        );
+        setModelConfig(newModelConfig);
+      }
     };
   }, []);
 
@@ -190,6 +219,7 @@ const App = ({ port }: { port: number }) => {
       <div style={{ position: "relative", flex: 1 }}>
         <Layout model={topLayoutModel} factory={componentFactory} />
       </div>
+      <ModelToolbar />
     </div>
   );
 };
